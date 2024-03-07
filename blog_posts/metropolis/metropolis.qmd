@@ -1,0 +1,152 @@
+---
+title: "The Metropolis Algorithm"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+---
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+*Sampling the Unknowable*
+
+# Introduction to Statistical Concepts
+
+Yeah, I know that the title sounds like an entire course, but my hope here is to provide a brief introduction to some of the concepts that are important for understanding the Metropolis algorithm. I will assume some knowledge of probability and statistics, similar to that of AP Stats, but my hope is to make the jumps as logical as possible. 
+
+## Probability Distributions
+
+We will start with the continuous case. In other words, we will ignore discrete distributions such as the binomial and Poisson distributions. This is mostly fine, as we can often approximate the discrete distributions with continuous ones (see the [Central Limit Theorem](https://en.wikipedia.org/wiki/Central_limit_theorem)). 
+
+```{r}
+x <- seq(-5, 5, 0.01)
+y <- dnorm(x, mean = 0, sd = 1)
+plot(x, y, type = "l", col = "blue", lwd = 2, xlab = "x", ylab = "Density", main = "Normal Distribution")
+```
+
+So what is a probability distribution? The Normal Distribution, as seen above, is an example of a probability distribution. It's a function, which means that it takes in an argument and returns a value. In this case, the argument is $x$, and the value is the density of the distribution at that point. Because of this, we called it a probability density function (PDF). 
+
+There is a key fact about all probability distributions, which is that the area under the curve is equal to 1. This is because the total probability of all possible outcomes is 1. Intuitively, this makes sense because the probability of something happening is 1. If the area is not equal to one, then we cannot classify it as a probability distribution. 
+
+## Bayesian Inference
+
+In Bayesian inference, we are interested in the posterior distribution. This is the distribution of the parameter(s) of interest after observing the data. The posterior distribution is proportional to the likelihood times the prior. The reason we say proportional instead of equal is because when you multiply the likelihood and the prior, you get the unnormalized posterior. In other words, the area under it is not equal to one. 
+
+$$
+p(\theta | x) \propto p(x | \theta) p(\theta)
+$$
+
+$$
+p(\theta | x) = \frac{p(x | \theta) p(\theta)}{p(x)}
+$$
+
+The denominator is the marginal likelihood, which is the probability of observing the data. It is the integral of the likelihood times the prior over all possible values of $\theta$. We also call the marginal likelihood (the denominator) the normalizing constant.
+
+$$
+p(x) = \int p(x | \theta) p(\theta) d\theta
+$$
+
+For anyone who has taken calculus, they are probably thinking "well, this integral looks easy enough, especially for a computer." You're totally right, in the context of a single variable distribution. However, once we scale the problem to include many parameters (as is often the case in Bayesian inference), the integral becomes intractable. This might seem a little bit confusing, but there are times when we just can't compute an integral (see [this very mathy wikipedia article](https://en.wikipedia.org/wiki/Variational_Bayesian_methods#Problem)). I'm going to leave it at that, mostly because I don't fully understand it myself, and partly because I want to spend the majority of the time obsessing over the Metropolis algorithm in its glory. 
+
+One question that might arise after that spiel is "why do we need the normalizing constant"? In other words, what is the purpose of conducting Bayesian inference in the first place? In most cases, we care about three things: point estimates (modes), the shape (curvy), and credible intervals (variance). 
+
+Point estimates are the easy part. We can just take the mode of the posterior distribution. The mode is the value of $\theta$ that maximizes the posterior. This is essentially the same as the maximum likelihood estimate, but with a prior. We don't need to scale the posterior to find the mode, so we don't need the normalizing constant.
+
+The shape also doesn't rely on the normalizing constant. The normalizing constant is just a scaling factor, so it doesn't change the shape of the distribution. We might want to know the shape to see if the posterior is multimodal or skewed.
+
+Credible intervals are a little bit more complicated. You might have heard of confidence intervals, which give us a range of values that we are 95% confident contains the true parameter. Credible intervals are similar, but they are based on the posterior distribution. In order to compute these intervals, we need to know the variance of a distribution, which is derived from the closed form equation of the distribution (meaning we'd need to know the normalizing constant). Here's the formula for the variance of a distribution:
+
+$$
+\text{Var}(X) = E[X^2] - E[X]^2 = \int_{-\infty}^{\infty} x^2 f(x) dx - \left( \int_{-\infty}^{\infty} x f(x) dx \right)^2
+$$
+
+
+
+
+# The Algorithm Itself
+
+Okay, so what I am getting towards? We will look at single variable distributions because they are easy to visualize and understand. However, know that the Metropolis algorithm can be applied to multi-dimensional distributions without the same problems that we encounter with the marginal likelihood.
+
+Here's a rundown of the algorithm. Hopefully, you'll be able to see where the idea of a Markov Chain comes in.
+
+1. Start at some initial value of $\theta$. 
+2. Propose a new value of $\theta$ from a proposal distribution. In the original Metropolis algorithm, this is a normal distribution centered at the current value of $\theta$ with a specified standard deviation $\sigma$ that we get to pick. 
+3. Calculate the acceptance probability. This is the ratio of the posterior evaluated at the proposed value of $\theta$ to the posterior evaluated at the current value of $\theta$.
+4. Move to the proposed value of $\theta$ with probability equal to the acceptance probability. Otherwise, stay at the current value of $\theta$. Here's where the idea of randomness comes into play (the Monte Carlo part).
+5. Repeat steps 2-4 a large number of times, starting at the new value of $\theta$ each time and storing the values of $\theta$ that you accept (you will store one value per round).
+
+That's it! Seems simple, right? 
+
+Let's see some examples to help us understand the algorithm. By the way, all of the code is in R, so if you want to tweak some of these values, feel free to do so. 
+
+## Super Simple Example
+
+We will start off super simples. Suppose we have a normal distribution with a mean of 0 and a standard deviation of 1, but the area under it isn't equal to one. In fact, if we look at the equation for the normal distribution, we see that the normalizing constant is $\frac{1}{\sqrt{2\pi}}$, which is somewhat hard to find with traditional integration methods (go ahead, it's not trivial in the slightest). We will use the following formula for the normal distribution:
+
+$$
+f(x) = e^{-\frac{x^2}{2}}
+$$
+
+Yep, that's right. We got rid of the normalizing constant, and we will still be able to find the variance using the Metropolis algorithm. 
+
+```{r}
+f <- function(x) exp(-(x^2) / 2)
+
+n <- 10000
+theta <- rep(0, n)
+sigma <- 1
+for (i in 2:n) {
+    theta_new <- rnorm(1, theta[i - 1], sigma) # proposal distribution
+    alpha <- f(theta_new) / f(theta[i - 1])
+    if (runif(1) < alpha) {
+        theta[i] <- theta_new
+    } else {
+        theta[i] <- theta[i - 1]
+    }
+}
+
+hist(theta, breaks = 50, col = "blue", main = "Posterior Samples", xlab = "Theta")
+```
+
+That's not bad! We can also do something fancy called a kernal density estimate (KDE) to estimate the density of the distribution. 
+
+```{r}
+plot(density(theta))
+```
+
+As you can see, this looks nearly identical to the normal distribution we plotted earlier. It's not perfect, but it's pretty close. And we didn't even need to know the normalizing constant!
+
+The best part is that we can find the variance of the samples to estimate the variance of the distribution. No calculus required! 
+
+```{r}
+var(theta)
+```
+
+And look at that, it's (almost) 1! (Factorial or not, it's still 1).
+
+<!-- Okay, now for that normalizing constant. We can estimate it by finding the density of the samples of the distribution and dividing that by the output of our unscaled probability distribution (denotated as `f` in R). We will restrict the range of the density to be between -1 and 1, as the density estimate is not perfect at the tails.
+
+```{r}
+d <- density(theta)
+d_ty <- d$y[d$x > -1 & d$x < 1]
+d_tx <- d$x[d$x > -1 & d$x < 1]
+mean(d_ty / f(d_tx))
+```
+
+And there you have it! We have estimated the normalizing constant. $\frac{1}{\sqrt{2\pi}} \approx 0.399$ is the true value, so we were pretty close.
+
+But of course, this is somewhat of a dumb thing to do, as we don't even need to know the normalizing constant to use the Metropolis algorithm.  -->
+
+I'm going to leave it at that for now, but I hope that you can see the power of the Metropolis algorithm. Here's what you should take away from this:
+1. Bayesian Statistics often requires finding the marginal likelihood, which is often intractable.
+2. We can use the Metropolis algorithm to sample from the posterior distribution without needing to know the marginal likelihood.
+3. We can use these samples to estimate the posterior distribution (and its "moments"), which is what we truly care about in Bayesian statistics.
+
+[Here's a cool presentation](https://web.ics.purdue.edu/~tgallen/Teaching/Econ_690_Fall_2015/Lecture%2016%20-%20MCMC.pdf) that gives a little more detail about the Metropolis algorithm (as well as Gibbs sampling, which is closely related) with more math. 
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>
