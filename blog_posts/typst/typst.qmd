@@ -1,0 +1,107 @@
+---
+title: "Typst"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+---
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+*A better $\LaTeX$*
+
+![[Courtesy of XKCD](https://xkcd.com/1341/)](https://imgs.xkcd.com/comics/types_of_editors.png)
+
+# $\LaTeX$
+
+If you haven't heard of LaTeX, you're in one of two groups:
+
+1. Either you don't need to write math
+2. You've been writing math using Microsoft Word or, worse, Google Docs
+
+So what is LaTeX? In short, it's a typesetting language that allows you to write math beautifully. It's compiled, meaning that you write your document in a text editor and then compile it into a PDF. In other words, what you see is not what you get. For example you might see something like this:
+
+```
+$\phi = \frac{1 + \sqrt{5}}{2}$
+```
+
+And it will render as this:
+
+$\phi = \frac{1 + \sqrt{5}}{2}$
+
+In an editor like Google Docs, you see what you get (see the XKCD above). This simplicity makes writing easier. For documents that don't require much formatting, Google Docs/Word will suffice, but for more complex documents, LaTeX is (or it has been) way better, and often times faster (once you do it enough).
+
+At first, LaTeX WILL be slower than writing in a WYSIWYG ([what you see is what you get](https://en.wikipedia.org/wiki/WYSIWYG)) editor. But, over time, you will get faster. And at some point, you will be write in LaTeX faster than you would in word. As they say, practice makes perfect, and this is no exception. 
+
+And the output is beautiful. You will take more pride in your work. Your work will look professional. Your peers will look at your work with awe. 
+
+# Problems with LaTeX
+
+![My absurdly long list of packages, although I will say that tikz is nice, especially when you export it from Geogebra, to get the juicy highlighable text in a figure.](overleaf.png)
+
+Now that you've been convinced to [use LaTeX](https://overleaf.com), here's why you shouldn't. Sure, it looks nice, but it's a pain to write. And while you may get faster at writing it, you still have to wait an eternity for it to compile. LaTeX is old, degraded, and slow. Not to mention the insane number of packages you need to use to do anything. Want to make a table or graph? You need a package. At this point, I have a large list of packages I copy and paste into every LaTeX document I write, but these end up slowing down the compile times and make the document harder to read, especially given that there are about a billion ways to do the same thing. 
+
+# Enter Typst
+
+![Look at that nice syntax (and super cool lab!)](typst.png)
+
+Most people who have used LaTeX will be hesitant to switch away from it. Hey, it has been around since 1984, so pretty much everything written in academia is in LaTeX. It's scary to try new things. 
+
+But regardless of your LaTeXing ability and status, my hope is that you *at least* give Typst a try. Typst resolves almost all of the problems with LaTeX while retaining the beauty of the output and the functionality of the language.
+
+## Instant Compile
+
+The greatest part of Typst, without a doubt, is the ability for it to compile continuously as you write. [Here, give it a try.](https://typst.app) There is nearly zero delay between typing into the text file and seeing the change in the PDF. It's instant, and it's amazing. My greatest gripe with using Overleaf is the slow compile times. Anytime you make a change and are uncertain of the output, you have to wait for the document to compile. Sometimes, this is acceptable, especially if you are writing something simple. But the second you try to do anything complex and want to iterate on your document, it becomes a pain. 
+
+## Markdown-like Syntax
+
+While you might think that this is a negative due to its inherent light-weightedness (lack of functionality to make it easier to use), Typst somehow combines the simplicity of markdown with the power of LaTeX. Backslashes are gone, and replaced with function that you call using the `#` symbol. For example, inserting an image as a figure in Typst looks like this:
+
+```
+#figure(
+    image("image_name.svg", width=60%),
+    caption=["This is a caption"]
+)
+```
+
+vs in LaTeX:
+
+```
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{image_name.png}
+    \caption{This is a caption}
+\end{figure}
+```
+
+One thing you might have noticed is that you can use svgs in Typst. While you can use svgs in LaTeX, it (of course) requires a package has less-than-optimal usability. Typst has this built in.
+
+Also notice that in LaTeX, you have to use the `[H]` option to force the image to be placed where you want it (don't ask why this isn't the default, and using `H` also requires a package). In Typst, this is the default behavior. Same goes with the `\centering` command.
+
+## Math Syntax
+
+Typst uses a variation of the LaTeX math syntax. It is way better, in my option. LaTeX requires a ton of backslashes and brackets to do anything. Just look back at the example for the golden ratio $\phi$. In Typst, the golden ratio equation looks like this:
+
+```
+$phi = (1 + sqrt(5)) / 2$
+```
+
+Besides being easier to read, it is also easier to write. Any word longer than one character is interpreted as a variable, so all of the commands requiring backslashes just use the word. 
+
+Fractions are also easier to write. In LaTeX, you have to use the `\frac{}{}` command. In Typst, you just use the `/` symbol, minding the parentheses like you would for any other math operation. 
+
+# Closing Notes
+
+There are many other examples of Typst's superiority over LaTeX, such as it being written in Rust, the better error messages (mostly due to instant compile), and the much better implementation of tables. 
+
+And Typst is still a baby compared to LaTeX. It's constantly improving and in development. There are still some missing features (such as wrapfigures), but soon they will be fixed. And, in my humble opinion, Typst still has my vote any day.
+
+
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>

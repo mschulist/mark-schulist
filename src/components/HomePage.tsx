@@ -6,7 +6,7 @@ export default function HomePage() {
     <>
       <div className="flex justify-evenly items-center h-screen">
         <div className="flex-col flex items-center">
-          <h1 className="text-8xl">Hi, I&apos;m Mark</h1>
+            <TextGenerateEffect words={"Hi, I'm Mark"} className="text-8xl"/>
         </div>
         <div className="flex-col flex items-center"></div>
       </div>
