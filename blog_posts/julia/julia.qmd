@@ -1,0 +1,191 @@
+---
+title: "Julia"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: julia-1.9
+---
+
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+*A better way?*
+
+![[What I hope Julia will avoid](https://xkcd.com/1987/)](https://imgs.xkcd.com/comics/python_environment.png)
+
+# Rational Behind This Blog
+
+After using R, I realized that python is *sometimes* better than R. Now, for simple tasks, R is still nicer because you don't have to worry about as many things (see above xkcd) and there are more built-in functions. For quick iteration and *just getting it done*, R is still my go-to. However, I've started to appreciate the fact that python is a more powerful language than R. That being said, I've been hearing a lot about Julia, and I want to see how it does at some of the same tasks I might do in R or python. 
+
+From what I've heard, Julia is nice because it is fact. It is [just-in-time compiled](https://en.wikipedia.org/wiki/Just-in-time_compilation), which is super cool itself. 
+
+# Starting Simple
+
+## Plotting 
+
+Let's begin with something simple: plotting the standard normal distribution. 
+
+```{julia}
+#| fig-cap: "Standard Normal Distribution"
+using Plots
+using Distributions
+
+x = -3:0.1:3
+y = pdf(Normal(), x)
+plot(x, y)
+```
+
+Okay, not bad. It's pretty much the same as R or python. 
+
+What about a histogram? I'll try to sample from a normal distribution and plot a histogram. 
+
+```{julia}
+#| fig-cap: "Histogram of Samples From a Normal Distribution"
+x = randn(10000)
+histogram(x)
+```
+
+Not bad. What about a kernel density estimate? Something I've noticed is that installed packages takes forever because it has to compile the package on your computer. 
+
+```{julia}
+#| fig-cap: "Kernel Density Estimate of Samples From a Normal Distribution"
+#| warning: false
+#| error: false
+using KernelDensity
+d = kde(x)
+plot(d.x, d.density)
+```
+
+Cool. I like the `.` notation for the `x` and `density` attributes, instead of the `$` in R. This feels more similar to other programming languages like JS. 
+
+# Data Manipulation
+
+## Loading in Data
+
+Let's load in a dataset, say this dataset from Kaggle of [basketball shots](https://www.kaggle.com/datasets/jiweikang/nba-shot-locations-1997-2020). Now, this dataset is large, like about 1GB. So we will see how Julia handles it. 
+
+```{julia}
+using CSV
+using DataFrames
+bb = CSV.File("./nba_shots.csv") |> DataFrame
+first(bb, 5)
+```
+
+That took a while to load, let's hope that my computer can handle storing it in memory... My goal is to find how the shooting percentage is related to distance from the hoop. Then, we'll be able to see how the average number of points changes with distance (to prove why NBA players shoot so many 3s). 
+
+First, let's select the columns we need. There are the `Shot Made Flag`, `Shot Type`, `X Location`, and `Y Location`. 
+
+```{julia}
+bb_small = select(bb, [:"Shot Made Flag", :"Shot Type", :"X Location", :"Y Location"])
+first(bb_small, 5)
+```
+
+We can now free up some memory by deleting (setting it to nothing) the original dataset. 
+
+```{julia}
+bb = nothing
+```
+
+## Data Cleaning
+
+Right now, the `Shot Made Flag` is a string, but we'd like to it to be a boolean. 
+
+```{julia}
+bb_small[!, :"Shot Made Flag"] = bb_small[!, :"Shot Made Flag"] .== "Made"
+first(bb_small, 5)
+```
+
+The `.` is known as a [broadcasting operator](https://docs.julialang.org/en/v1/manual/arrays/#Broadcasting-1). It's a way to apply a function to each element of an array. It's somewhat similar to the vectorized functions in R, but more explicit.
+
+Before we move on, I'd like to rename the columns to be shorter and without spaces. 
+
+```{julia}
+rename!(bb_small, Dict(:"Shot Made Flag" => :made, :"Shot Type" => :type, :"X Location" => :x, :"Y Location" => :y))
+first(bb_small, 5)
+```
+
+That's pretty nice. The `!` in `rename!` is a convention in Julia to indicate that the function modifies the input instead of creating a new object (it's done in place).
+
+Before we go ahead and calulate the distance to the hoop, let's change the `type` column to be a numeric: either 2 or 3. 
+
+```{julia}
+bb_small[!, :type] .= replace.(bb_small[!, :type], "2PT Field Goal" => 2, "3PT Field Goal" => 3)
+first(bb_small, 5)
+```
+
+Now we can convert the `type` column to be of the numeric type. 
+
+```{julia}
+bb_small[!, :type] = parse.(Int64, bb_small[!, :type])
+first(bb_small, 5)
+```
+
+Okay, that was a lot of data cleaning! Now we can move onto something more interesting, calculating the distance to the hoop. The x and y coordinates have units $\frac{1}{10}$ feet, and we want our result in cm (because freedom units are impossible to deal with). Let's start with changing the units to cm. 
+
+## Exploratory Data Analysis
+
+```{julia}
+bb_small[!, :x] = bb_small[!, :x] * 3.048
+bb_small[!, :y] = bb_small[!, :y] * 3.048
+println(maximum(bb_small[!, :x])) # just to see if it worked
+first(bb_small, 5)
+```
+
+With the x and y coordinates in cm, we can calculate the distance to the hoop using the Pythagorean theorem. 
+
+```{julia}
+bb_small[!, :distance] = sqrt.(bb_small[!, :x].^2 + bb_small[!, :y].^2)
+first(bb_small, 5)
+```
+
+Okay, here's our next step. First, we need to calculate the shooting percentage for each distance (aggregated to arbitrary bins). Then, we can calculate the make percentage for each group. 
+
+```{julia}
+bb_small[!, :distance_round] = round.(bb_small[!, :distance], digits=-1) # rounding to the nearest dm (decimeter)
+bb_group = groupby(bb_small, :distance_round)
+bb_group = combine(bb_group, :made => mean)
+first(bb_group, 5)
+```
+
+Let's plot it!
+
+```{julia}
+#| fig-cap: "Make Percentage vs Distance to Hoop"
+plot(bb_group[!, :distance_round], bb_group[!, :made_mean], seriestype=:line)
+```
+
+Wow, that's super cool! Recalling our goal, we wanted to see how the average number of points changes with distance. We can do this by multiplying the make percentage by the number of points for each shot. We can also get rid of the shots that are past 1000cm, because there is very little data. 
+
+```{julia}
+bb_small = filter(row -> row[:distance] < 1000, bb_small)
+bb_small[!, :points] = bb_small[!, :type] .* bb_small[!, :made]
+bb_group = groupby(bb_small, :distance_round)
+bb_group = combine(bb_group, :points => mean)
+first(bb_group, 5)
+```
+
+Let's plot it!
+
+```{julia}
+#| fig-cap: "Average Points vs Distance to Hoop"
+plot(bb_group[!, :distance_round], bb_group[!, :points_mean], seriestype=:line, xlabel="Distance to Hoop (cm)", ylabel="Average Points", title="Average Points vs Distance to Hoop")
+```
+
+So what does that show us? Basically, if you shoot a three, you are scoring, on average, the same number of points as shooting from around one meter, which is insane! It's no wonder that NBA players are shooting so many threes.
+
+
+# Conclusion
+
+So what did I learn? Julia is pretty similar to Python and R for exploratory data analysis. Because it's newer, the syntax feels more natural and explicit (without being overly verbose like some other languages [cough cough Java]). I'm excited to see how it performs with more complex tasks, like machine learning (gradient descent). That'll be next time!
+
+
+
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>
