@@ -91,7 +91,7 @@ Fractions are also easier to write. In LaTeX, you have to use the `\frac{}{}` co
 
 # Closing Notes
 
-There are many other examples of Typst's superiority over LaTeX, such as it being written in Rust, the better error messages (mostly due to instant compile), and the much better implementation of tables. 
+There are many other examples of Typst's superiority over LaTeX, such as it being written in Rust, the better error messages (mostly due to instant compile), and the much better [implementation of tables](https://typst-table.vercel.app/). 
 
 And Typst is still a baby compared to LaTeX. It's constantly improving and in development. There are still some missing features (such as wrapfigures), but soon they will be fixed. And, in my humble opinion, Typst still has my vote any day.
 

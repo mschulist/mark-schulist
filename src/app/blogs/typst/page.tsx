@@ -9,6 +9,7 @@ export default function TypstBlog() {
                 src="/typst.html" 
                 style={{width: '1px', minWidth: '100%'}}
                 checkOrigin={false}
+                height={"2000"}
             />
         </div>
     )

@@ -1,0 +1,259 @@
+---
+title: "Gradients"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: python3
+---
+
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+*Descending into knowledge*
+
+![[What I hope we will get to](https://xkcd.com/1838/)](https://imgs.xkcd.com/comics/machine_learning.png)
+
+
+So what is a gradient, and why are they so important in machine learning? If you haven't taken calculus, the concept of a derivative might be a bit foreign to you. If you have (especially if you've taken multivariable calculus), you've definitely seen gradients, but might not know how they are used in machine learning. My hope is to build up the intuition behind gradients and illustrate how they are used in machine learning.
+
+# The Derivative
+
+In $\mathbb{R}^2$ (the 2 dimensional real plane), the derivative of a function $f(x)$ at a point $x$ is a the slope of the function at that point. Check out [this desmos graph](https://www.desmos.com/calculator/dxnfetv0xm) to see how the derivative computes the slope of the function at a point. 
+
+In the context of machine learning, our goal, given a *cost* function $f(x)$, is to find the minimum of the function. Because most cost functions are not convex, we can't just set the derivative to zero and solve for the minimum. Instead, we use the derivative to find the direction of steepest descent.
+
+# Finding Minima of Single Variable Functions
+
+Let's write some python code that will find the minimum of any arbitrary one variable function. We will make a function that takes the derivative using the (hand wavy) limit definition of the derivative. 
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+def diff(f, x, h=1e-6):
+    return (f(x+h) - f(x))/h
+
+def move_towards_min(f, x, learning_rate):
+    return x - learning_rate * diff(f, x)
+
+def f(x):
+    return x**2
+
+
+x = 10 # starting x value
+x_vals = [x]
+learning_rate = 0.2
+print(x)
+for i in range(10):
+    x = move_towards_min(f, x, learning_rate)
+    x_vals.append(x)
+    print(x)
+```
+
+That's cool, let's see how the value of x is minimized on the function $f(x) = x^2$.
+
+```{python}
+plt.plot(np.arange(0, len(x_vals)), [f(x) for x in x_vals])
+plt.xlabel("Iteration")
+plt.ylabel("f(x)")
+plt.title("Minimizing $f(x) = x^2$")
+plt.show()
+```
+
+We can also visualize the function and the path that the algorithm took to find the minimum.
+
+```{python}
+x = np.linspace(-5, 11, 100)
+y = f(x)
+plt.plot(x, y)
+plt.scatter(x_vals, [f(x) for x in x_vals], color='red')
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.title("$f(x) = x^2$")
+plt.show()
+```
+
+# The Gradient
+
+So that was cool, we were able to find the minimum of single variable function using the derivative and descending towards a minimum. In essence, that is exactly how gradient descent works. But instead of working in one dimension, gradient descent operates in $n$ dimensions ($\mathbb{R}^n$). 
+
+Let's try to implement a naive gradient descent algorithm for 2 variable functions. 
+
+First, like above, we will define our own gradient function that approximates the slope at a given point. 
+
+```{python}
+def gradient(f, x, y, h = 1e-6):
+    x_partial = (f(x+h, y) - f(x, y))/h
+    y_partial = (f(x, y+h) - f(x, y))/h
+    return [x_partial, y_partial]
+
+def move_x_y_to_min(f, x, y, learning_rate):
+    x_p, y_p = gradient(f, x, y)
+    x_move = x - learning_rate * x_p
+    y_move = y - learning_rate * y_p
+    return [x_move, y_move]
+```
+
+Then we can apply the same methodology as the single variable case, keeping in mind that we need to update both the x and y coordinates. 
+
+```{python}
+def f(x, y):
+    return 2 * x**2 + y**2 + 4*x - 2*y + 1
+
+x, y = -2, 2 # "arbitrary" starting values
+
+x_vals = [x]
+y_vals = [y]
+learning_rate = 0.1
+for i in range(10):
+    x, y = move_x_y_to_min(f, x, y, learning_rate)
+    x_vals.append(x)
+    y_vals.append(y)
+    print(x, y)
+```
+
+Before we try to visulize this in $\mathbb{R}^3$, let's see how $f$ gets minimized for each sequential iteration. In other words, we should see it getting smaller every time we take another step (called an epoch). 
+
+```{python}
+f_vals = [f(x_vals[i], y_vals[i]) for i in range(len(x_vals))]
+plt.plot(np.arange(0, len(f_vals)), f_vals)
+plt.xlabel("Iteration")
+plt.ylabel("f(x,y)")
+plt.title("Minimizing $f(x,y) = 2x^2 + y^2 + 4x - 2y + 1$")
+plt.show()
+```
+
+Okay, now we can try to visualize the function in $\mathbb{R}^3$ and the path that the algorithm took to find the minimum. 
+
+```{python}
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D  
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d', computed_zorder=False)
+x = np.linspace(-3, 0.5, 100)
+y = np.linspace(-0.5, 3, 100)
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+ax.plot_surface(X, Y, Z)
+ax.scatter(x_vals, y_vals, f_vals, color='red')
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("$f(x,y) = 2x^2 + y^2 + 4x - 2y + 1$")
+plt.show()
+```
+
+Wow! Despite it being in 3 dimensions, the same principle applies. Gradient descent was able to find the minimum of the function $f(x,y) = 2x^2 + y^2 + 4x - 2y + 1$ by iteratively moving towards the minimum.
+
+# Application to Linear Regression
+
+While I hope that you see that this is a powerful tool for finding the minimum of a function, you might be wondering how this is used in machine learning. Well, let's give it a try!
+
+I am going to try to fit a linear model to some data using gradient descent, implemented from scratch. Normally people use libraries like `sklearn` or `pytorch`, but this example is so simple that doing it ourselves will allow us to learn more. 
+
+We will implement a least-squares linear regression model. The cost function (the function we will descend on) is the average of the sum of the squared residuals. 
+
+$$
+\text{cost}(\theta) = \frac{1}{n} \sum_{i=1}^{n} (x_i \theta - y_i)^2
+$$
+
+Here, we represent this as a matrix operation (the `@` operator), but that just compactifies the code. In reality, we are just summing the squared residuals.
+
+The gradient of the cost function with respect to $\theta$ is
+
+$$
+\nabla_{\theta} \text{cost}(\theta) = \frac{2}{n} X^T (X\theta - y)
+$$
+
+where $X$ is the matrix of features and $y$ is the vector of target values. The feature matrix $X$ is the data matrix with an additional column of ones (for the intercept term). The target vector $y$ is the vector of target values. 
+
+
+```{python}
+def least_squares_cost(X, y, theta):
+    n = len(y)
+    return np.sum((X @ theta - y)**2) / n
+
+def gradient_least_squares_cost(X, y, theta):
+    n = len(y)
+    return 2 * X.T @ (X @ theta - y) / n # the gradient of the cost function
+
+def move_theta_to_min(X, y, theta, learning_rate):
+    return theta - learning_rate * gradient_least_squares_cost(X, y, theta)
+```
+
+Here, we took the derivative of the cost function with respect to $\theta$ (the parameters of the model). We then update $\theta$ by moving towards the minimum of the cost function.
+
+Next, we will simulate some data. Because we are simulating data, we can see how well the model does at predicting the underlying parameters we used in the simulation. We will simulate data from the model $y = 4x + 2 + \epsilon$, where $\epsilon \sim N(0, 0.5)$.
+
+```{python}
+def f(x):
+    return 4 * x + 2 # the true (underlying) equation
+n_samples = 100
+x = np.random.uniform(0, 1, (n_samples, 1))
+y = f(x) + np.random.normal(0, 0.5, (n_samples, 1))
+```
+
+Now we can run the gradient descent algorithm to find the parameters of the model that minimize the cost function. 
+
+```{python}
+theta = np.random.uniform(0, 1, (2, 1)) # random starting values
+X = np.hstack((x, np.ones((n_samples, 1)))) # make into feature matrix
+learning_rate = 0.1
+err = []
+for i in range(100):
+    theta = move_theta_to_min(X, y, theta, learning_rate)
+    err.append(least_squares_cost(X, y, theta))
+    if i % 10 == 0:
+        print(least_squares_cost(X, y, theta))
+```
+
+Finally, we can visualize the data and the model that we fit to the data. 
+
+```{python}
+plt.scatter(x[:, 0], y, label='Data points')  # Plot data points
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Data and Fitted Line')
+
+# Plot the fitted line
+x_values = np.linspace(0, 1, 100)
+y_values = theta[0] * x_values + theta[1]
+plt.plot(x_values, y_values, color='red', label='Fitted line')
+
+plt.legend()
+plt.show()
+```
+
+
+Well that was cool, and next time I will explain how the code works. But for now, we can analyze how the gradient descent worked. Because there are 100 data points, we can't exactly visualize 100 dimensions, but we can see how the error decreased with each iteration. 
+
+```{python}
+it = np.arange(0, len(err))
+plt.plot(it, err)
+plt.xlabel("Iteration")
+plt.ylabel("Error")
+plt.title("Error of Least Squares Linear Regression Model")
+plt.show()
+```
+
+
+See, the error decreased (rapidly) with each iteration. We can change the learning rate to make it decrease more slowly or more quickly. For more complex models, it is important to tune the learning rate to make sure that the model converges to the minimum. If it's too high, the model might overshoot the minimum and never converge. If it's too low, the model might take too long to converge.
+
+# Conclusion
+
+Isn't gradient descent just the coolest? It's so simple, yet incredibly powerful. While these simple examples are more easily solved using analytical methods, gradient descent is a powerful tool for finding the minimum of functions that are not easily solved analytically, which is the case for most machine learning models.
+
+Now that we know how gradient descent works, we can start to build up a more complex model. Next time, I will explain how the code behind the model works and how we can use it to fit more complex models.
+
+
+
+
+
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>
