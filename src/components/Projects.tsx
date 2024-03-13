@@ -1,3 +1,4 @@
+import BentoHeader from "./BentoHeader";
 import { BentoGrid, BentoGridItem } from "./ui/bento-grid";
 import Image from "next/image";
 
@@ -6,32 +7,23 @@ const projects = [
     title: "WashU Course Watch",
     description: "A website to help WashU students sign up for classes",
     className: "bg-gradient-to-r from-cyan-950 to-zinc-800 h-full justify-end",
-    header: (
-      <Image
-        src={"/course_washu.gif"}
-        alt=""
-        height={0}
-        width={400}
-        className="rounded-lg"
-      />
-    ),
+    header: BentoHeader({
+      image: "/course_washu.gif",
+      width: 400,
+    }),
     href: "/projects/course-watch",
   },
   {
     title: "eBird CBC",
-    description: "A website to help Christmas Bird Count compilers compile CBC data from eBird",
+    description:
+      "A website to help Christmas Bird Count compilers compile CBC data from eBird",
     className: "bg-gradient-to-r from-cyan-950 to-zinc-800 h-full justify-end",
-    header: (
-      <Image
-        src={"/ebirdcbc.png"}
-        alt=""
-        height={0}
-        width={325}
-        className="rounded-lg"
-      />
-    ),
+    header: BentoHeader({
+      image: "/ebirdcbc.png",
+      width: 325,
+    }),
     href: "/projects/ebird-cbc",
-  }
+  },
 ];
 
 export default function Projects() {
