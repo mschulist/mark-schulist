@@ -10,12 +10,10 @@ const blogPosts = [
     description: "Starting to understand MCMC",
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
-    header: (
-      BentoHeader({
-        image: "/metropolis_clip.gif",
-        width: 400,
-      })
-    ),
+    header: BentoHeader({
+      image: "/metropolis_clip.gif",
+      width: 400,
+    }),
     href: "/blogs/metropolis",
   },
   {
@@ -23,12 +21,10 @@ const blogPosts = [
     description: "Why I love Typst",
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
-    header: (
-      BentoHeader({
-        image: "/typst_comp.gif",
-        width: 800,
-      })
-    ),
+    header: BentoHeader({
+      image: "/typst_comp.gif",
+      width: 800,
+    }),
     href: "/blogs/typst",
   },
   {
@@ -36,12 +32,10 @@ const blogPosts = [
     description: "A better way to do data science?",
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-stone-800 h-full",
-    header: (
-      BentoHeader({
-        image: "https://julialang.org/assets/infra/logo.svg",
-        width: 350,
-      })
-    ),
+    header: BentoHeader({
+      image: "https://julialang.org/assets/infra/logo.svg",
+      width: 350,
+    }),
     href: "/blogs/julia",
   },
   {
@@ -49,13 +43,22 @@ const blogPosts = [
     description: "An exploration of minimizing function using gradient descent",
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
-    header: (
-      BentoHeader({
-        image: "/gradient.gif",
-        width: 400,
-      })
-    ),
+    header: BentoHeader({
+      image: "/gradient.gif",
+      width: 400,
+    }),
     href: "blogs/gradient",
+  },
+  {
+    title: "Neural Networks",
+    description: "Understanding neural networks with Pytorch",
+    className:
+      "md:col-span-1 bg-gradient-to-r from-cyan-950 to-stone-800 h-full",
+    header: BentoHeader({
+      image: "/nn.png",
+      width: 350,
+    }),
+    href: "/blogs/neuralNetwork",
   },
 ];
 

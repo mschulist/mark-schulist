@@ -1,0 +1,360 @@
+---
+title: "Neural Networks"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: python3
+---
+
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+![[Neural Networks are so natural, right?](https://xkcd.com/2173/)](https://imgs.xkcd.com/comics/trained_a_neural_net.png)
+
+# What do we want to do?
+
+It's easy to get caught up in the weeds of neural networks. It's also easy to have all of the details abstracted away to the point where you don't understand what's going on. I think the best way is to start simple, to make sure we understand the basics of what a neural network is _actually_ doing. Then, we can build on that to create more complex models, keeping in mind that once the models become more complex, it becomes increasingly more difficult to understand what's actually going on under the hood (and at the extreme level, like GPT, we have no idea what's happening).
+
+A normal model works like this: we derive some formula based on theory (like the constant acceleration model in physics) and then we fit the model to the data. Let's say we have some data on the position ($x, y$) of a particle over time, and we want to know the initial velocity ($\vec{v}_0$) of the particle. We know in the y direction, that there is a constant acceleration due to gravity ($g$), so we can write the following equations:
+
+$$
+y = v_{0y}t - \frac{1}{2}gt^2
+$$
+
+$$
+\frac{dy}{dt} = v_{y} = v_{0y} - gt
+$$
+
+In the x direction, we know that there is no acceleration, so we can write the following equations:
+
+$$
+x = v_{0x}t
+$$
+
+$$
+\frac{dx}{dt} = v_{x} = v_{0x}
+$$
+
+Using our data, we can fit a linear model to the $x$ vs $t$ graph and a quadratic model to the $y$ vs $t$ graph. We can then use the coefficients of these models to find the initial velocity of the particle. Despite this model being simple, it is extremely accurate at determining the initial velocity of the particle given some data on the position of the particle over time. 
+
+Our goal is to build a model, but instead of deriving the formula based on theory, we want the model to "learn" the formula from the data. This is where the idea of a neural network comes in. The network is adapable, meaning that while there is a general structure to the network, the parameters of the network are not fixed. Our goal is to find the parameters of the network that best fit the data, which is done using a process called backpropagation and gradient descent.
+
+# Building a Neural Network
+
+We will use pytorch to build our neural network. Pytorch is very popular, for good reason. It's simple, but also powerful. As customary, we will start with a simple example. We will build a neural network that can learn the function $y = x^2 + x +  1$. We will then use this network to predict the value of $y$ given some value of $x$. Of course, if we know that the data took the form of $y = x^2 + x + 1$, we could just use the formula to predict the value of $y$. However, the point of this exercise is to show how a neural network can learn the formula from the data. 
+
+```{python}
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = torch.linspace(-10, 10, 100).reshape(-1, 1)
+y = x**2 + x + 1
+```
+
+Here, we've created 100 data points between -10 and 10. We've then created the corresponding $y$ values using the formula $y = x^2 + x + 1$ we want the network to learn.
+
+Next, we will create the model. We will use a simple feedforward neural network with one hidden layer. The input to the network will be $x$ and the output will be $y$. The hidden layer will have 100 neurons. We will use the ReLU activation function for the hidden layer and no activation function for the output layer. 
+
+```{python}
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(1, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 1)
+        )
+        
+    def forward(self, x):
+        x = self.linear_relu_stack(x)
+        return x
+    
+model = Model()
+```
+
+What this means is that we have one input layer (the value of x), one hidden layer (the part that does the "learning"), and one output layer (the value of y). The hidden layer has 100 neurons, which means that there are 100 parameters that the network can learn. The ReLU activation function is applied to the hidden layer, which is a simple function that returns the value of the input if it is positive, and 0 otherwise. 
+
+Let's plot what the ReLU activation function looks like:
+
+```{python}
+xReLU = np.linspace(-10, 10, 100)
+yReLU = np.maximum(x, 0)
+plt.plot(xReLU, yReLU)
+plt.title('ReLU Activation Function')
+plt.show()
+```
+
+For some reason, the ReLU activation function is a popular activation function in neural networks (it's linear which is nice). People who are way smarter than me have said that this is a good function to use, so we'll use it, I guess!
+
+The loss function (see gradients blog) is the mean squared error, which is a common loss function used in regression problems. The optimizer is stochastic gradient descent (SGD), which is a common (but not so great, as we will see...) optimizer used in neural networks. The reason it is called "stochastic," is because the gradient is calculated using a random subset of the data rather than the entire dataset. This makes the optimization process faster, but also more noisy. 
+
+```{python}
+criterion = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+```
+
+Finally, we can write a loop that trains the model. We will train the model for 1000 epochs. An epoch is one pass through the entire dataset, where the model is updated after each pass using the optimizer (gradient descent). The learning rate is how much closer to the minimum of the loss function the model gets after each update.
+
+```{python}
+epochs = 1000
+for epoch in range(epochs):
+    optimizer.zero_grad()
+    output = model(x)
+    loss = criterion(output, y)
+    loss.backward()
+    optimizer.step()
+    
+    if epoch % 100 == 0:
+        print(f'Epoch: {epoch}, Loss: {loss.item()}')
+```
+
+After training the model, we can plot the data and the model to see how well the model fits the data. 
+
+```{python}
+# Plot the data and the model
+plt.plot(x, y, label='Data')
+plt.plot(x, model(x).detach().numpy(), label='Model')
+plt.legend()
+plt.show()
+```
+
+Ehh, it's not perfect, definitely not as good if we had used a quadratic model, but it's not bad! The model, without us telling it anything about the formula, was able to learn the formula $y = x^2 + x + 1$ from the data. And with more layers, the model _should_ be even more accurate. Actually, we can try that!
+
+```{python}
+x = torch.linspace(-10, 10, 100).reshape(-1, 1)
+y = x**2 + x + 1
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.stack = nn.Sequential(
+            nn.Linear(1, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 1)
+        )
+        
+    def forward(self, x):
+        x = self.stack(x)
+        return x
+    
+model = Model()
+
+criterion = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+
+# train the model
+epochs = 1000
+for epoch in range(epochs):
+    optimizer.zero_grad()
+    output = model(x)
+    loss = criterion(output, y)
+    loss.backward()
+    optimizer.step()
+    
+    if epoch % 100 == 0:
+        print(f'Epoch: {epoch}, Loss: {loss.item()}')
+
+# Plot the data and the model
+plt.plot(x, y, label='Data')
+plt.plot(x, model(x).detach().numpy(), label='Model')
+plt.legend()
+plt.show()
+```
+
+It's a little better, but not by that much. With 100 neutrons, the model should do a much better job minimizing the loss function. Just look at the loss after 900 epochs, it's terrible, not even close to 0! When I was testing this, I found that the model was very sensitive to the learning rate. If the learning rate was too high, the model would not converge. If the learning rate was too low, the model would take forever to converge. We could spend all day picking the _perfect_ learning rate, but that would be pointless. Instead, we can use a different optimizer, like Adam, which is a more advanced optimizer that adapts the learning rate during training. 
+
+```{python}
+x = torch.linspace(-10, 10, 100).reshape(-1, 1)
+y = x**2 + x + 1
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.stack = nn.Sequential(
+            nn.Linear(1, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 1)
+        )
+        
+    def forward(self, x):
+        x = self.stack(x)
+        return x
+    
+model = Model()
+
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+# train the model
+epochs = 1000
+for epoch in range(epochs):
+    optimizer.zero_grad()
+    output = model(x)
+    loss = criterion(output, y)
+    loss.backward()
+    optimizer.step()
+    
+    if epoch % 100 == 0:
+        print(f'Epoch: {epoch}, Loss: {loss.item()}')
+
+# Plot the data and the model
+plt.plot(x, y, label='Data')
+plt.plot(x, model(x).detach().numpy(), label='Model')
+plt.legend()
+plt.show()
+```
+
+
+Woah, that's way better! The loss is almost 0 after just 200 epochs. For now on, we will definitely use the Adam optimizer. 
+
+# Image Classification
+
+The classic example of a neural network is image classification. We will use the [MNIST dataset](https://en.wikipedia.org/wiki/MNIST_database), which is a dataset of handwritten digits. The goal is to build a model that can classify the digits correctly. The "correct" way to do this is using a convolutional neural network (CNN), but that'll be next time! For now, we will use a simple feedforward neural network. 
+
+```{python}
+import torchvision
+import torchvision.transforms as transforms
+
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+
+trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True)
+
+dataiter = iter(trainloader)
+images, labels = next(dataiter)
+
+def imshow(img):
+    img = img / 2 + 0.5
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
+
+imshow(torchvision.utils.make_grid(images))
+```
+
+Here's an example of the digits we will be classifying. The goal is to build a model that can classify these digits correctly. 
+
+We will use a model that has an input layer, two hidden layers, and an output layer. The input layer will have 28x28 neurons, which is the size of the images when flattened out into a single vector (instead of a matrix). The output layer will have 10 neurons, which is the number of possible digits that could have been written (0-9). The hidden layers will have 100 neurons each, which was arbitrarily chosen because 100 is a nice number. We will use the ReLU activation function for the hidden layers for the same reason as before. 
+
+```{python}
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.flatten = nn.Flatten()
+        self.stack = nn.Sequential(
+            nn.Linear(28*28, 100),
+            nn.ReLU(),
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            nn.Linear(100, 10)
+        )
+        
+    def forward(self, x):
+        x = self.flatten(x)
+        x = self.stack(x)
+        return x
+
+model = Model()
+```
+
+The loss function is the [cross-entropy loss function](https://en.wikipedia.org/wiki/Cross-entropy#Cross-entropy_loss_function_and_logistic_regression), which is a common loss function used in classification problems. We use it because it is the log loss, which has the nice property that it penalizes the model more for being very wrong. You can read more about it at the wikipedia link above. The optimizer is Adam, which we found to be a good optimizer for the regression problem. 
+
+```{python}
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+```
+
+Due to the enormous size of the dataset (at least compared to our linear regression), we will train the model for 2 epochs. If this doesn't do the job (which we can check with the testing data), we can always train the model for more epochs.
+
+```{python}
+epochs = 2
+for epoch in range(epochs):
+    for i, data in enumerate(trainloader, 0):
+        inputs, labels = data
+        output = model(inputs)
+        loss = criterion(output, labels)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        
+        if i % 5000 == 0:
+            print(f'Epoch: {epoch}, Loss: {loss.item()}')
+```
+
+After training the model, we can test the model on some test data to see how well it performs. 
+
+```{python}
+testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False)
+
+dataiter = iter(testloader)
+images, labels = next(dataiter)
+
+imshow(torchvision.utils.make_grid(images))
+print('GroundTruth: ', ' '.join('%5s' % labels[j].item() for j in range(4)))
+
+outputs = model(images)
+_, predicted = torch.max(outputs, 1)
+
+print('Predicted:   ', ' '.join('%5s' % predicted[j].item() for j in range(4)))
+```
+
+Okay, great, it got them correct. Let's see how well the model performs on the entire test set. 
+
+```{python}
+correct = 0
+total = 0
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+print(f'Accuracy of the network on the 10000 test images: {100 * correct / total}%')
+```
+
+That's insane! The model is super accurate! That's pretty good for a simple feedforward neural network with only 2 epochs of training. 
+
+# Conclusion
+
+Well, we really did a lot. Here's a summary of what we did:
+
+- We built a simple feedforward neural network that learned the formula $y = x^2 + x + 1$ from samples data created from this model (equation).
+- We built a simple feedforward neural network that classified handwritten digits with very high (>90%) accuracy.
+- We learned about all of the small details that go into building a neural network, like the loss function, the optimizer, and the activation function, and how they affect the performance of the model (a lot!).
+
+Next time, we will look at convolutional neural networks. CNNs are one of my favorite things in the entire world (even cooler than what we did today, which seems like [magic](https://xkcd.com/2904/)!), and I hope that you will also find them as cool as I do! 
+
+
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>
