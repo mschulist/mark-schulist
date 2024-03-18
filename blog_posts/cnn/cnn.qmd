@@ -1,0 +1,263 @@
+---
+title: "Convolutional Neural Networks"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: python3
+---
+
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+![[Or maybe, with CNNs, we can classify them easily...](https://xkcd.com/1425/)](https://imgs.xkcd.com/comics/tasks.png)
+
+# What is a Convolution?
+
+If you haven't seen [3b1b's video on convolutions](https://www.youtube.com/watch?v=KuXjwB4LzSA), I HIGHLY recommend checking it (and every single other video he's made) out. It's a great explanation of what a convolution is and how it works. 
+
+I'm going to assume that you generally understand what a convolution is, as I'd like to spend the majority of the understanding how they work in a ML context. Here's what you really need to know:
+
+- You can think of a convolution as a way to "slide" a filter over an image. At each position, you multiply the filter by the image and sum the results. This is the "convolution" operation.
+- We call the filter a "kernel" and the result of the convolution the "feature map" because it's a map of the features in the image. Now, we could design special kernels to detect edges and other features in the image, but instead we let the neural network learn the kernels that are best for the task at hand (by trying to minimize the loss function using gradient descent).
+
+Here's an example of what a convolution does to an image:
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+
+# Load the image
+image = cv2.imread('images/altamira_oriole.jpg')
+image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # Convert to grayscale
+
+# Define the kernel
+v_kernel = np.array([[1, 0, -1],
+                   [1, 0, -1],
+                   [1, 0, -1]])
+
+h_kernel = np.array([[1, 1, 1],
+                   [0, 0, 0],
+                   [-1, -1, -1]])
+
+# Perform the convolution
+v_convolution = cv2.filter2D(image, -1, v_kernel)
+h_convolution = cv2.filter2D(image, -1, h_kernel)
+
+# Plot the results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 3, 1)
+plt.imshow(image, cmap='gray')
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(1, 3, 2)
+plt.imshow(v_convolution, cmap='gray')
+plt.title('Vertical Edge Detection')
+plt.axis('off')
+
+plt.subplot(1, 3, 3)
+plt.imshow(h_convolution, cmap='gray')
+plt.title('Horizontal Edge Detection')
+plt.axis('off')
+
+plt.show()
+```
+
+As you can see, the vertical edge detection kernel is able to detect the vertical edges in the image, while the horizontal edge detection kernel is able to detect the horizontal edges. By vertical edge, I mean an edge that is oriented vertically (such as a pole), and by horizontal edge, I mean an edge that is oriented horizontally (such as the roof of a house).
+
+These kernels reduce the amount of information in the image, while preserving the important features. This is useful because it reduces the amount of data that the neural network has to process, while still preserving the important features. 
+
+# What is a Convolutional Neural Network?
+
+In a traditional neural network, we have a series of fully connected layers. Each neuron in one layer is connected to every neuron in the next layer. This is great for learning complex patterns, but it loses a key piece of information contained in images: spatial information. If you look back to the model I created to classify the MNIST (hand-written digits) dataset, you'll see that I flattened the image into a 1D array before feeding it into the neural network. Flattening refers to the process of converting a 2D image into a 1D array, which loses the spatial information contained in the image. 
+
+With CNNs, we preserve this spatial information by _not_ flattening the image. Instead, we use a series of convolutional layers to learn the features in the image. These convolutional layers are followed by pooling layers (usually taking the max of a square of pixels and making that the new pixel), which reduce the size of the feature maps and make the network more computationally efficient. Finally, we have a series of fully connected layers to classify the image. 
+
+Here's a simple CNN to classify the hand-written digits dataset. Let's see how well it performs compared to the model we created earlier (although that model was already very good). Let's begin by loading in the dataset, the same as last time. 
+
+```{python}
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
+train_dataset = torchvision.datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(), download=True)
+
+train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
+```
+
+Now, when we define our model, we'll use a series of convolutional layers followed by pooling layers. We won't need to flatten the image like last time, we can just feed in the entire 2D matrix (grayscale image) into the network. 
+
+Here's an explanation of what each layer does:
+
+- The first layer (`nn.Conv2d`) takes in the 2d, 28x28 matrix of pixels (grayscale, from each image) and performs a convolution on it using 32 different kernels that the model attempts to learn. The idea is that the different kernels will extract different "features" from the images that the model can then "map" these features to certain outcomes (such as digits 0-9). Of course, we will probably not be able to understand the features it picks out (not as simple as edges like above), but the model adjusts the kernels to minimize the loss (cost) function. 
+
+- The second layer (`nn.ReLU`) is an activation layer that defines how the kernels in the previous layer actually learn. This is a linear activation function, you can look back to the Neural Networks post to see how it is used in a more simple model. In essence, this function defines what each neuron (in each kernel in this case) will output given some input and weights/bias parameters. 
+
+- The third layer (`nn.MaxPool2d`) takes in each of the 32 convoluted images and downscales them by taking the max of each 2x2 subset of pixels. It converts each 28x28 matrix (which there are 32 of, I know, confusing...) to a 14x14 matrix. So, after this step, we are left with 32 14x14 matrices (ideally) each representing some features of the image. 
+
+- The fourth layer (`nn.Conv2d`) does the exact same thing it did before, taking each 14x14 matrix of pixels (smaller now due to the `MaxPool2d`) and performing a convolution on each of them, with a unique kernel it learns to extract "features". The only difference this time is that it outputs 64 different images (performs 64 convolutions). We do this because the image size is smaller, so we can do more convolutions without slowing down the model too much. 
+
+- The fifth layer (`nn.ReLU`) is the same as above. It is the activation function used to train the kernels. 
+
+- The sixth layer (`nn.MaxPool2d`) is the same as above, downscaling each of the 64 14x14 images to 64 7x7 images by taking the max of a group of pixels. 
+
+- The seventh layer (`nn.Flatten`) is finally some change! We take the 64 7x7 images and flatten them into a 1D tensor (basically an array). This sets us up to use linear layers at the end. 
+
+- The eighth layer (`nn.Linear`) takes in the flattened images and maps them to 128 neurons. Finally, we're back in normal NN land!
+
+- The ninth layer (`nn.ReLU`) is the activation function used to train the 128-neuron linear layer. 
+
+- The tenth (`nn.Linear`) is the end of our journey, where the 128 neurons get mapped to 10 neurons that are meant to represent the digits 0-9.
+
+```{python}
+class CNN(nn.Module):
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.stack = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(),
+            nn.Linear(64*7*7, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10)
+        )
+        
+    def forward(self, x):
+        return self.stack(x)
+
+model = CNN()
+```
+
+We will (again, since SGD was terrible) use the Adam optimizer and the cross-entropy loss function.
+
+```{python}
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+criterion = nn.CrossEntropyLoss()
+```
+
+Then we can train the model, only using one epoch since it's a simple dataset and we don't want to spend all day here (more about that later...).
+
+```{python}
+num_epochs = 1
+
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        
+        if (i+1) % 100 == 0:
+            print(f'Epoch {epoch+1}/{num_epochs}, Step {i+1}/{len(train_loader)}, Loss: {loss.item()}')
+```
+
+That took a while, but hopefully we can make it faster by running it on a GPU (but that'll be later...). Finally, we can evaluate the model on the test set.
+
+```{python}
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for images, labels in test_loader:
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+accuracy = 100 * correct / total
+print(f'Accuracy: {accuracy}%')
+```
+
+That's a significant improvement over the previous non-CNN model, and we only used one epoch. With more epochs (which we will try later), we could probably get even better results.
+
+# GPU Acceleration
+
+We saw that these more complex models take a long time to train, even on a simple dataset like MNIST. These models have an ever-increasing number of parameters, and we can run them on the GPU to make them run much faster (this is partly why Nvidia stock has been doing so well).
+
+I have an Apple Silicon chip (M2), so I can't use CUDA (Nvidia's GPU acceleration library), but I can use Metal (MPS). I'll show you how to do that here.
+
+First, we need to check if we have a GPU available and set the device to the GPU if we do.
+
+```{python}
+if torch.backends.mps.is_available():
+    mps_device = torch.device("mps")
+else:
+    print ("MPS device not found.")
+```
+
+Then, we can move the model, loss, and optimizer to the GPU. We can also reload the data. 
+
+```{python}
+train_dataset = torchvision.datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(), download=True)
+
+train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
+
+model = model.to(mps_device)
+criterion = criterion.to(mps_device)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+```
+
+And that's it! Now, when we run the model, it will run on the GPU and be much faster. 
+
+```{python}
+num_epochs = 5
+
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        optimizer.zero_grad()
+        images = images.to(mps_device)
+        labels = labels.to(mps_device)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        
+        if (i+1) % 500 == 0:
+            print(f'Epoch {epoch+1}/{num_epochs}, Step {i+1}/{len(train_loader)}, Loss: {loss.item()}')
+```
+
+After doing more Epochs, we can evaluate the model on the test set.
+
+```{python}
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for images, labels in test_loader:
+        images = images.to(mps_device)
+        labels = labels.to(mps_device)
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+accuracy = 100 * correct / total
+print(f'Accuracy: {accuracy}%')
+```
+
+That's better, pretty insane to be honest! Just imagine what we can do with a more complex datasets (other than just digits).
+
+# Conclusion
+
+So what did we learn? We saw that CNNs are much better at classification tasks than traditional neural networks, especially when it comes to image data. We also saw that we can use GPU acceleration to make training these models much faster. 
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>

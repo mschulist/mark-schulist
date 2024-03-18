@@ -60,6 +60,17 @@ const blogPosts = [
     }),
     href: "/blogs/neuralNetwork",
   },
+  {
+    title: "Convolutional Neural Networks",
+    description: "Moving beyond fully connected layers",
+    className:
+      "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
+    header: BentoHeader({
+      image: "/cnn.png",
+      width: 600,
+    }),
+    href: "/blogs/cnn",
+  }
 ];
 
 const BlogLanding: React.FC = () => {
