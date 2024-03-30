@@ -18,7 +18,7 @@ export default function AboutText() {
             These will be in the form of blog posts, where I try my best to explain a concept in a way that (hopefully) shares my excitement of something with you.
         </p>
         <p className="text-2xl">
-            In case you're interested, <a href="Mark_Schulist_Resume.pdf" className="underline">here's my resume. </a>
+            In case you're interested, <a href="https://f005.backblazeb2.com/file/mark-schulist/Mark_Schulist_Resume.pdf" className="underline">here's my resume. </a>
         </p>
         <p className="text-2xl">
             Thanks for visiting my site! As always, I hope you learn something!

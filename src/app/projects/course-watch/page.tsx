@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function CourseWatch() {
   return (
-    <div className="flex flex-col gap-4 mx-10 xl:mx-60 lg:mx-40 md:mx-20 my-2">
+    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
       <a
         className="text-4xl self-center m-4 transform transition-transform duration-100 hover:scale-110"
         href="https://wustlwatch.courses/"
@@ -32,7 +32,7 @@ export default function CourseWatch() {
           WashU 2023).
         </p>
         <Image
-          src={"/webstac.png"}
+          src={"https://f005.backblazeb2.com/file/mark-schulist/webstac.png"}
           alt="Webstac, our 'fantastic' system"
           height={0}
           width={500}

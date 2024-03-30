@@ -1,16 +1,11 @@
-"use client"
 import React from "react";
-import IframeResizer from "iframe-resizer-react";
+import Post from "@/components/Post";
 
-export default function TypstBlog() {
+export default async function Page() {
+        const path = "blogs/typst/typst.html";
     return (
         <div>
-            <IframeResizer 
-                src="/typst.html" 
-                style={{width: '1px', minWidth: '100%'}}
-                checkOrigin={false}
-                height={"2000"}
-            />
+            <Post path={path}/>
         </div>
     )
 }

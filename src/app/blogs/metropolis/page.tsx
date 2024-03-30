@@ -1,16 +1,12 @@
-"use client"
+import Post from "@/components/Post";
 import React from "react";
-import IframeResizer from "iframe-resizer-react";
 
-export default function MetropolisBlog() {
+
+export default async function Page() {
+    const path = "blogs/metropolis/metropolis.html";
     return (
         <div>
-            <IframeResizer 
-                src="/metropolis.html" 
-                style={{width: '1px', minWidth: '100%'}}
-                checkOrigin={false}
-                height={"2000"}
-            />
+            <Post path={path} />
         </div>
     )
 }

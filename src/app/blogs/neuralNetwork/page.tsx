@@ -1,16 +1,11 @@
-"use client"
+import Post from "@/components/Post";
 import React from "react";
-import IframeResizer from "iframe-resizer-react";
 
-export default function NeuralNetworkBlog() {
+export default async function Page() {
+    const path = "blogs/neural_network/neural_network.html";
     return (
         <div>
-            <IframeResizer 
-                src="/neural_network.html" 
-                style={{width: '1px', minWidth: '100%'}}
-                checkOrigin={false}
-                height={"2000"}
-            />
+            <Post path={path} />
         </div>
     )
 }

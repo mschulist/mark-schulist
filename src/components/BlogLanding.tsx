@@ -1,8 +1,8 @@
-import React from "react";
-import { cn } from "@/utils/cn";
+"use client";
+import React, { use } from "react";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import Image from "next/image";
 import BentoHeader from "./BentoHeader";
+import { useRouter } from "next/navigation";
 
 const blogPosts = [
   {
@@ -11,7 +11,8 @@ const blogPosts = [
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
     header: BentoHeader({
-      image: "/metropolis_clip.gif",
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/metropolis/metropolis_clip.gif",
       width: 400,
     }),
     href: "/blogs/metropolis",
@@ -22,7 +23,8 @@ const blogPosts = [
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
     header: BentoHeader({
-      image: "/typst_comp.gif",
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/typst/typst_comp.gif",
       width: 800,
     }),
     href: "/blogs/typst",
@@ -44,7 +46,8 @@ const blogPosts = [
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
     header: BentoHeader({
-      image: "/gradient.gif",
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/gradient/gradient.gif",
       width: 400,
     }),
     href: "blogs/gradient",
@@ -55,7 +58,8 @@ const blogPosts = [
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-stone-800 h-full",
     header: BentoHeader({
-      image: "/nn.png",
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/neural_network/nn.png",
       width: 350,
     }),
     href: "/blogs/neuralNetwork",
@@ -66,18 +70,27 @@ const blogPosts = [
     className:
       "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
     header: BentoHeader({
-      image: "/cnn.png",
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/cnn/cnn.png",
       width: 600,
     }),
     href: "/blogs/cnn",
-  }
+  },
 ];
 
 const BlogLanding: React.FC = () => {
+  const router = useRouter();
+  blogPosts.forEach((post) => {
+    router.prefetch(post.href);
+  });
   return (
     <BentoGrid className="grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-20 items-center p-10">
       {blogPosts.map((post, i) => (
-        <a href={post.href} key={i} className="h-full content-start">
+        <a
+          onClick={() => router.push(post.href)}
+          key={i}
+          className="h-full content-start cursor-pointer"
+        >
           <BentoGridItem
             key={i}
             className={post.className}

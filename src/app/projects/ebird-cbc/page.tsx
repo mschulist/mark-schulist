@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function EBirdCBC() {
   return (
-    <div className="flex flex-col gap-4 mx-10 xl:mx-60 lg:mx-40 md:mx-20 my-2">
+    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
       <a
         className="text-4xl self-center p-4 transform transition-transform duration-100 hover:scale-110"
         href="https://github.com/ddkapan/eBirdCBC"
@@ -41,7 +41,7 @@ export default function EBirdCBC() {
           the session in the app with others.
         </p>
         <Image
-          src={"/ebirdcbc.png"}
+          src={"https://f005.backblazeb2.com/file/mark-schulist/ebirdcbc.png"}
           alt="eBird CBC"
           height={0}
           width={600}

@@ -1,16 +1,11 @@
-"use client"
 import React from "react";
-import IframeResizer from "iframe-resizer-react";
+import Post from "@/components/Post";
 
-export default function JuliaBlog() {
+export default async function Page() {
+    const path = "blogs/julia/julia.html";
     return (
         <div>
-            <IframeResizer 
-                src="/julia.html" 
-                style={{width: '1px', minWidth: '100%'}}
-                checkOrigin={false}
-                height={"2000"}
-            />
+            <Post path={path} />
         </div>
     )
 }
