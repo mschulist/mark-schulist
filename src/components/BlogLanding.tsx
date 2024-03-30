@@ -3,6 +3,7 @@ import React, { use } from "react";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import BentoHeader from "./BentoHeader";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const blogPosts = [
   {
@@ -83,8 +84,9 @@ const BlogLanding: React.FC = () => {
   return (
     <BentoGrid className="grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-20 items-center p-10">
       {blogPosts.map((post, i) => (
-        <a
-          onClick={() => router.push(post.href)}
+        <Link
+          href={post.href}
+          // onClick={() => router.push(post.href)}
           key={i}
           className="h-full content-start cursor-pointer"
         >
@@ -95,7 +97,7 @@ const BlogLanding: React.FC = () => {
             description={post.description}
             header={post.header}
           ></BentoGridItem>
-        </a>
+        </Link>
       ))}
     </BentoGrid>
   );
