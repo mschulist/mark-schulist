@@ -80,9 +80,6 @@ const blogPosts = [
 
 const BlogLanding: React.FC = () => {
   const router = useRouter();
-  blogPosts.forEach((post) => {
-    router.prefetch(post.href);
-  });
   return (
     <BentoGrid className="grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-20 items-center p-10">
       {blogPosts.map((post, i) => (
