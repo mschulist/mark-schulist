@@ -1,16 +1,17 @@
 /* eslint-disable react/no-unescaped-entities */
 import Image from "next/image";
+import Link from "next/link";
 
 export default function CourseWatch() {
   return (
-    <div className="flex flex-col gap-4 mx-10 xl:mx-60 lg:mx-40 md:mx-20 my-2">
-      <a
+    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
+      <Link
         className="text-4xl self-center m-4 transform transition-transform duration-100 hover:scale-110"
         href="https://wustlwatch.courses/"
         target="_blank"
       >
         WashU Course Watch
-      </a>
+      </Link>
       <h2 className="text-3xl py-4">What it is</h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <p className="text-lg">
@@ -32,7 +33,7 @@ export default function CourseWatch() {
           WashU 2023).
         </p>
         <Image
-          src={"/webstac.png"}
+          src={"https://f005.backblazeb2.com/file/mark-schulist/webstac.png"}
           alt="Webstac, our 'fantastic' system"
           height={0}
           width={500}
@@ -50,13 +51,13 @@ export default function CourseWatch() {
         also using a cron job to check the course status every minute during
         course registration time.
       </p>
-      <a
+      <Link
         href="https://github.com/mschulist/washu-course-alerts"
         className="underline text-lg transform transition-transform duration-100 hover:scale-110 self-start"
         target="_blank"
       >
         Here's the GitHub repo in case you're interested.
-      </a>
+      </Link>
     </div>
   );
 }

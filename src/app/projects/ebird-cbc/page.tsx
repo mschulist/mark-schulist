@@ -1,24 +1,25 @@
 /* eslint-disable react/no-unescaped-entities */
 import Image from "next/image";
+import Link from "next/link";
 
 export default function EBirdCBC() {
   return (
-    <div className="flex flex-col gap-4 mx-10 xl:mx-60 lg:mx-40 md:mx-20 my-2">
-      <a
+    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
+      <Link
         className="text-4xl self-center p-4 transform transition-transform duration-100 hover:scale-110"
         href="https://github.com/ddkapan/eBirdCBC"
         target="_blank"
       >
         eBirdCBC
-      </a>
+      </Link>
       <h2 className="text-3xl py-4">What it is</h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <p className="text-lg">
           As an avid birder, I have participated in the Christmas Bird Count
           (CBC) for the 7 years. We always {" use "}
-          <a href={"https://ebird.org"} target="_blank" className="underline">
+          <Link href={"https://ebird.org"} target="_blank" className="underline">
             {"eBird"}
-          </a>{" "}
+          </Link>{" "}
           to collect our data, which makes data collection effortless, but the
           process of compiling the data is a pain. Once we've downloaded the
           data from eBird, we spend hours figuring out which counts were
@@ -41,7 +42,7 @@ export default function EBirdCBC() {
           the session in the app with others.
         </p>
         <Image
-          src={"/ebirdcbc.png"}
+          src={"https://f005.backblazeb2.com/file/mark-schulist/ebirdcbc.png"}
           alt="eBird CBC"
           height={0}
           width={600}
@@ -61,13 +62,13 @@ export default function EBirdCBC() {
         The frontend uses Leaflet to display the map, which is a fantastic
         library and was the easiest part of the app to implement. I used a
         library {" called "}
-        <a
+        <Link
           href={"https://github.com/louischatriot/nedb"}
           target="_blank"
           className="underline"
         >
           nedb
-        </a>
+        </Link>
         {" to "} as the database, which is a simple database that uses a
         MongoDB-like API but is much more lightweight. It stores the data in a
         .db file on your computer, which is nice because you can share the

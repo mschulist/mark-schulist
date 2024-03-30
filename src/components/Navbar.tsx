@@ -19,18 +19,19 @@ const paths = [
 ];
 
 const Navbar: React.FC = () => {
+  const router = useRouter()
   return (
     <div className="flex justify-center items-center p-4">
       <NavigationMenu>
         <NavigationMenuList>
           {paths.map((path) => (
-            <a
-              href={path.href}
+            <button
+              onClick={() => router.push(path.href)}
               key={path.href}
               className="p-4 from-cyan-950 to-zinc-800 bg-gradient-to-br rounded-2xl hover:text-cyan-400 transition-colors duration-300 ease-in-out"
             >
               {path.label}
-            </a>
+            </button>
           ))}
         </NavigationMenuList>
       </NavigationMenu>
