@@ -86,7 +86,6 @@ const BlogLanding: React.FC = () => {
       {blogPosts.map((post, i) => (
         <Link
           href={post.href}
-          // onClick={() => router.push(post.href)}
           key={i}
           className="h-full content-start cursor-pointer"
         >
