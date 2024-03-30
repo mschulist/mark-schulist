@@ -15,6 +15,8 @@ export default function BentoHeader({
         height={0}
         width={width}
         className="rounded-lg max-h-full max-w-full"
+        priority
+        quality={25}
       />
     </div>
   );
