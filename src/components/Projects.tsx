@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import Link from "next/link";
 import BentoHeader from "./BentoHeader";
 import { BentoGrid, BentoGridItem } from "./ui/bento-grid";
 import Image from "next/image";
@@ -35,7 +36,7 @@ export default function Projects() {
       <h1 className="text-4xl py-4">Projects</h1>
       <BentoGrid className="grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-20 items-center p-10">
         {projects.map((project, i) => (
-          <button onClick={() => router.push(project.href)} key={i} className="h-full">
+          <Link href={project.href} key={i} className="h-full">
             <BentoGridItem
               key={i}
               className={project.className}
@@ -43,7 +44,7 @@ export default function Projects() {
               description={project.description}
               header={project.header}
             ></BentoGridItem>
-          </button>
+          </Link>
         ))}
       </BentoGrid>
     </div>
