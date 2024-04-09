@@ -7,6 +7,11 @@ const nextConfig = {
             hostname: 'f005.backblazeb2.com',
             port: '',
           },
+          {
+            protocol: 'https',
+            hostname: 'imgs.xkcd.com',
+            port: '',
+          }
         ],
       },
 };

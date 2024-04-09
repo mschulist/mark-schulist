@@ -7,6 +7,18 @@ import Link from "next/link";
 
 const blogPosts = [
   {
+    title: "The TOTAL Solar Eclipse",
+    description: "The ABSOLUTE coolest thing ever",
+    className:
+      "md:col-span-1 bg-gradient-to-r from-cyan-950 to-zinc-800 h-full",
+    header: BentoHeader({
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/eclipse/darker_eclipse.jpg",
+      width: 400,
+    }),
+    href: "/blogs/eclipse",
+  },
+  {
     title: "The Metropolis Algorithm",
     description: "Starting to understand MCMC",
     className:
