@@ -19,6 +19,18 @@ const blogPosts = [
     href: "/blogs/eclipse",
   },
   {
+    title: "Classifying Bird Recordings",
+    description: "Using machine learning to classify bird recordings",
+    className:
+      "md:col-span-1 bg-gradient-to-r from-cyan-950 to-stone-800 h-full",
+    href: "/blogs/perch",
+    header: BentoHeader({
+      image:
+        "https://f005.backblazeb2.com/file/mark-schulist/blogs/perch/spectrogram.png",
+      width: 400,
+    }),
+  },
+  {
     title: "The Metropolis Algorithm",
     description: "Starting to understand MCMC",
     className:

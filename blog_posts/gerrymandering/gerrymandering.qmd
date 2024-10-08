@@ -1,0 +1,181 @@
+---
+title: "Simulating Gerrymandering"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: python3
+---
+
+*What good is a democracy if the people don't have power?*
+
+<script src="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"></script>
+
+# What is Gerrymandering?
+
+If you haven't heard of it yet, it's the practice of (strategically) drawing district lines to give a party an advantage in elections. Ideally, the party that gets the most votes (overall), should also get the majority of seats. However, with gerrymandering, this is not always the case. For example, in the 2016 US presidential election, the Democrats got more votes overall, but the Republicans won the presidency. While this is not because of gerrymandering, it shows how majority of votes does not always mean that that party will win. 
+
+Usually, parties will draw district lines to pack as many of the opposing party's voters into as few districts as possible, while spreading their own voters out over many districts. This way, they can win more districts with fewer votes. In other words, they can have the majority of the seat, but not the majority of the votes (which sure seems unfair). 
+
+![[Wikipedia](https://en.wikipedia.org/wiki/Gerrymandering)](https://f005.backblazeb2.com/file/mark-schulist/blogs/gerrymandering/g_m_example.png)
+
+# Simulating Gerrymandering
+
+What does it even mean to simulate gerrymandering? We can create a simple model of a state (let's say CA) with a certain number of blocks (census blocks, which are smaller than the districts), and then draw district lines. We can then see how many seats each party wins when the districts are drawn in different ways. Ideally, we would want to the entire sample space of possible district lines, but that would be computationally infeasible. Instead, we can use a simple MCMC simulation to draw a large number of district lines and see how many seats each party wins in each case. From those results, we can see where the current district lines fall in the distribution of possible district lines. If it is an outlier, then we can say that it is likely gerrymandered. 
+
+## Making Our Own State
+
+Let's start by making our own state. We will make a simple state with 2000 blocks. We will randomly assign each block to a party (either party A or party B) with probability 0.55 (so that part A should have a slight majority). To visualize the state, we will use a graph, where the nodes are the blocks and the edges are the neighbors (blocks that share a border). The color of the node will represent the party that the block is assigned to (blue for A and red for B).
+
+```{python}
+import networkx as nx
+import matplotlib.pyplot as plt
+import random
+import numpy as np
+import distinctipy
+```
+
+```{python}
+n_districts = 40
+n_blocks = 1000
+random.seed(0)
+G = nx.grid_2d_graph(50, 40)
+for node in G.nodes:
+    G.nodes[node]['party'] = 'A' if random.random() < 0.55 else 'B'
+    G.nodes[node]['party_color'] = 'blue' if G.nodes[node]['party'] == 'A' else 'red'
+
+plt.figure()
+pos = {(i, j): (i, j) for i, j in G.nodes}
+party_colors = [G.nodes[node]['party_color'] for node in G.nodes]
+nx.draw(G, pos, node_color=party_colors, with_labels=False, node_size=20)
+plt.show()
+```
+
+Of course, this is a extremely oversimplified model of a state. In reality, states have many more blocks and the blocks are not arranged in a grid. However, this simple model should still demonstrate the idea of how we can detect gerrymandering using MCMC.
+
+## Drawing District Lines
+
+Now that we have our state, we can draw district lines. We will draw 40 districts, where each district has 50 blocks. We will color the districts differently, so that we can see where the district lines are. 
+
+```{python}
+for i, node in enumerate(G.nodes):
+    G.nodes[node]['district'] = i // 50
+
+plt.figure()
+pos = {(i, j): (i, j) for i, j in G.nodes}
+
+district_colors = distinctipy.get_colors(n_districts)
+
+district_node_colors = [district_colors[G.nodes[node]['district']] for node in G.nodes]
+nx.draw(G, pos, node_color=district_node_colors, with_labels=False, node_size=20)
+plt.show()
+```
+
+Note that these aren't particularly *good* district lines. They definitely don't represent how humans would draw lines, and aren't random in any sense. But, they are a good starting point for our simulation (because random district line drawing is challenging, which is the entire point of using MCMC simulations).
+
+## Counting Seats
+
+Now that we have our districts, we can count the number of seats each party wins. We will count the number of districts the A party wins (if we want to get the number of seats B wins, we can just subtract the number of seats A wins from the total number of districts, which is 5).
+
+```{python}
+def get_seats(G, n_districts):
+    district_a = [0 for _ in range(n_districts)]
+    district_b = [0 for _ in range(n_districts)]
+    for node in G.nodes:
+        district = G.nodes[node]['district']
+        if G.nodes[node]['party'] == 'A':
+            district_a[district] += 1
+        else:
+            district_b[district] += 1
+    for i in range(n_districts):
+        if district_a[i] > district_b[i]:
+            district_a[i] = 1
+            district_b[i] = 0
+        else:
+            district_a[i] = 0
+            district_b[i] = 1
+    return sum(district_a), sum(district_b)
+
+A_wins, B_wins = get_seats(G, n_districts)
+
+print(f'Party A wins {A_wins} seats')
+print(f'Party B wins {B_wins} seats')
+```
+
+Woah, that's incredible! Party A won 28 seats and Party B won 12 seats. Because Party A has the majority of the seats, this totally makes sense. What's even more interesting is how the relatively small (10%) difference number of blocks assigned to each party resulted in a 70% difference in the number of seats each party won. This is not gerrymandering, but shows how districting can have a huge impact on the number of seats each party wins.
+
+## Drawing Many District Lines and Counting Seats
+
+Now that we've set up the problem, we need to design a simulation that will efficiently draw many district lines and count the number of seats each party wins. For this, we will use MCMC. Here are the steps:
+
+1. Pick a random block and move it to a (random) adjacent district.
+2. Calculate the number of seats each party wins with the new district lines.
+3. Try it again!
+
+In this model, we are making a few assumptions (that are definitely wrong, but are good enough for this simulation). Most importantly, we are not checking if the districts contain the same number of blocks. In the real world, districts must contain the same number of people (or at least be close). However, we are not doing that here. Hopefully, our simulation will still be (mostly) valid, as the randomness should ensure that the districts are (mostly) balanced.
+
+```{python}
+def move_block(G, n_districts):
+    node = random.choice(list(G.nodes))
+    district = G.nodes[node]['district']
+    adjacent_nodes = list(G.adj[node])
+    adjacent_districts = [G.nodes[adjacent_node]['district'] for adjacent_node in adjacent_nodes]
+    new_district = random.choice(adjacent_districts)
+    G.nodes[node]['district'] = new_district
+```
+
+```{python}
+def simulate(G, n_districts, n_steps):
+    A_wins = []
+    B_wins = []
+    A_wins.append(get_seats(G, n_districts)[0])
+    B_wins.append(get_seats(G, n_districts)[1])
+    for _ in range(n_steps):
+        move_block(G, n_districts)
+        A_wins.append(get_seats(G, n_districts)[0])
+        B_wins.append(get_seats(G, n_districts)[1])
+    return A_wins, B_wins
+
+A_wins, B_wins = simulate(G, n_districts, 100_000)
+
+
+plt.figure()
+pos = {(i, j): (i, j) for i, j in G.nodes}
+district_node_colors = [district_colors[G.nodes[node]['district']] for node in G.nodes]
+nx.draw(G, pos, node_color=district_node_colors, with_labels=False, node_size=20)
+plt.show()
+
+plt.figure()
+plt.hist(A_wins, bins=range(n_districts + 1))
+plt.xlabel('Number of Seats Party A Wins')
+plt.ylabel('Frequency')
+plt.show()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>

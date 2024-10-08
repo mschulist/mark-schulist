@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import IframeResizer from "iframe-resizer-react";
+import IframeResizer from "@iframe-resizer/react";
 import { Meteors } from "./ui/meterors";
 
 export default function Post({ path }: { path: string }) {
@@ -25,7 +25,7 @@ export default function Post({ path }: { path: string }) {
           minWidth: "100%",
           opacity: loading ? 0 : 1, // use opacity instead of display
         }}
-        minHeight={1500}
+        license="GPLv3"
         scrolling={false}
         onLoad={handleLoad}
       />

@@ -1,0 +1,97 @@
+---
+title: "Bird Vocalization Classification"
+format:
+  html:
+    embed-resources: true
+theme: darkly
+jupyter: python3
+---
+
+<script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child"></script>
+
+I have been extremely lucky to have been a part of the Caples Creek Forest Resiliance project, which aims to understand the effects of prescribed fire on the forest ecosystem. The goal of this project is to understand the effects of prescribed fire on bird populations by surveying 82 points before and after the prescribed burn. Measuring bird populations is no easy task. Traditionally, researchers would conduct point counts, which involve going to a location and recording every bird (seen and heard) for a set amount of time (10 minutes in our case). Six years ago, in 2018, we hoped to take the next step in bird conservation research by automating the process of data collection. 
+
+![Map of Survey Points](images/caples_points.png)
+
+Autonomous recording units (ARUs) are devices that record audio. We deployed 28 ARUs and rotated them between the 82 points. They recorded audio for 15 minutes every 30 minutes, from 4:00 PM to 10:15 AM (the middle of the day has little bird activity). With this much data, it would be impossible for a human to listen to all of it. We needed a way to automatically classify bird vocalizations.
+
+![Me Putting Out the First ARU of the 2024 Field Season](images/first_aru.JPG)
+
+## The Perch Library: Transfer Learning for Bird Vocalization Classification
+
+Classification of bird vocalizations has traditionally been done with the following workflow:
+
+- Start with a base model (EfficientNet)
+- Convert the audio to a spectrogram (an image representation of the audio)
+- Train a model on a large dataset of bird vocalizations (usually the Xeno-Canto dataset)
+- Manually label a subset of the model outputs to determine a threshold for classification
+
+
+The most common framework used in this approach is [BirdNET](https://github.com/kahst/BirdNET-Analyzer). While BirdNET is amazing, [it has been shown](https://www.nature.com/articles/s41598-023-49989-z) that transfer learning can be used to improve the accuracy of bird vocalization classification models. What does transfer learning mean?
+
+Before we dive into transfer learning, let's first understand how a convolutional neural network (CNN) works. A CNN consists of many layers, each of which is meant to extract "features" a section of the image. The specifics aren't too important, but the key takeaway is that by the end of the network, the model has learned to recognize patterns in the image, and hopefully these patterns are useful for bird vocalization classification. The final layer is called the "output layer" and is responsible for making the final prediction. But the layer immediately before the output layer is where the magic of transfer learning happens. This layer contains all of the features that the model has learned without the final classification. 
+
+![Transfer Learning Workflow from [1](https://www.nature.com/articles/s41598-023-49989-z)](https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41598-023-49989-z/MediaObjects/41598_2023_49989_Fig1_HTML.png?as=webp)
+
+So great, we have an embedding for each 5 seconds of each audio file, but how does that help us? Well, let's see how we can use the embeddings to search for similar bird vocalizations!
+
+Our goal is to create a library of labeled examples *from the ARU recordings* for each species. Because we have control over the training dataset, we can ensure that the classifier is 1) trained on the same dataset it will be classifying and 2) not classifying vocalizations humans don't feel confident classifying (ambibous calls like woodpecker tapping and flight notes). 
+
+The first point (trained on ARU recordings) is important because the new model (let's call it the *custom clasifier*) will learn the noise profile of the ARUs, which may be different from the noise profile of the Xeno-Canto dataset. The noise profile refers the background noise present in the recordings, such as wind, water, and even internal interference from the ARU itself. Additionally, we can give the custom classifier *unknown* examples to classify, which will decrease the number of false positives. The unknown class is equililant to a negative label (eg. there is nothing vocalizing). 
+
+We don't want to classify vocalizations that we aren't confident in. Xeno-canto includes ALL call types, including ambiguous calls like woodpecker tapping and flight notes. As a human, we know that these calls are not useful for our analysis, so we can exclude them from the training dataset, something not possible with using the outputs from the large model. 
+
+## But How Does This Work?
+
+Using the [Perch library](https://github.com/google-research/perch), developed at Google Research, we can use the following workflow:
+
+- Embed the recordings using the [Perch model](https://www.kaggle.com/models/google/bird-vocalization-classifier/)
+- Download *hook* recordings from Xeno-canto
+- Use the *hook* recordings to find examples in the ARU recordings of each species (this takes the most time and trained humans)
+- Train a custom classifier on the ARU recordings found using the *hook* recordings
+- Use the custom classifier to classify the ARU recordings
+
+What is a hook recording? I'm defining a hook recording to be known recording of a bird vocalization that is used to find similar vocalizations in the ARU recordings. This allows us to quickly find examples of each species in the ARU recordings without having to manually search through the recordings. Of course, the human is still needed to label the examples, but the Perch library makes this process much faster.
+
+## Results on the Caples Creek Dataset
+
+### Embedding
+
+Over the course of the past 7 years we have collected 15 Terabytes of recordings. That's about 100,000 15-minute recordings! There's no way that any human (or collection of humans) could listen to all of that data. 
+
+First, I had to organize all of the recordings. While that may sound simple, when you have a central server with recordings in many nested directories, it becomes a bit more complex. After writing a few python scripts to create symlinks from the recordings' locations to a central directory, I was able to use the Perch library to embed all of the recordings.
+
+Embedding the recordings on a single GPU took a few days. The embeddings were saved to a TFRecord file, although that will soon change with the advent of Perch's AgileV2 that uses a SQLite database to store the embeddings (and allows for indexing them for SUPER big datasets...). 
+
+### Agile Modeling
+
+For the agile modeling part, I created a website that would allow other birders to label the examples. I downloaded a few hook recordings for each species, and then precomputed the spectrograms for each recording. Then, the user would be fed recordings and asked to classify them. 
+
+![Screenshot of website showing how to annotate a recording](images/annotate_recordings.png)
+
+After setting up the website, we were able to label over 30 examples for most classes, plenty to train our classifier on top of the Perch embeddings. 
+
+![Screenshot of website showing Warbling Vireo Recording](images/labeled_outputs.png)
+
+### Custom Classifier Outputs
+
+The custom classifier was a HUGE success. It's hard to quantify how good it is because our lack of training data (we only have 30 examples for most classes) makes it hard to evaluate the model. However, looking over a subset of the outputs, it's clear that it is picking up birds that even many humans can't hear. Not only does it appear that its false negative rate is low, but it also has a low false positive rate. When it does classify recordings, it's pretty much always correct. Using our own data REALLY helped the model improve and learn the specifics of our data, especiall with our somewhat large amount of training data (30 is not a ton, but it is a lot for "few-shot" learning).
+
+When the custom model was trained, it left out a few recordings which the custom classifier was able to get all correct. Of course, this is a very small sample size, but it shows just how powerful the model is. 
+
+## Future Work
+
+There are a few things that I would like to do in the future. For one, I would like to use the new agile modeling framework. Right now, the "database" is just the file structure in a cloud bucket, but a proper database will do wonders to making it more efficient and easy to use. 
+
+Additionally, I would like to be able to assign multiple labels to a single recording. There are many times when there are multiple birds vocalizing, and I don't want the non-labeled species to be penalized. 
+
+Once the new agile modeling framework is released, I will work on updating the website to use it. My hope is to release a site that will allow anyone to train a custom classifier on their own data without any coding experience.
+
+
+<script>
+x=document.querySelectorAll("a");
+for(i=0;i<x.length;i++)
+{
+   x[i].setAttribute("target","_blank");
+}
+</script>

@@ -5,7 +5,7 @@ export default function AboutText() {
     <div className="flex mx-10 flex-col xl:mx-60 lg:mx-40 md:mx-20">
       <h1 className="text-4xl py-4">A Little About Me</h1>
         <p className="text-2xl">
-            Hi! I'm Mark, a first-year at Washington University in St. Louis. 
+            Hi! I'm Mark, a second-year at Washington University in St. Louis. 
             As an advocate of learning because learning is, just cool, I made this website to share my thoughts and projects with the world.
         </p>
         <p className="text-2xl">
