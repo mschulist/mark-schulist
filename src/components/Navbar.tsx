@@ -1,6 +1,6 @@
-"use client";
-import React from "react";
-import { usePathname, useRouter } from "next/navigation";
+'use client'
+import React from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -10,33 +10,32 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   NavigationMenuViewport,
-} from "@/components/ui/navigation-menu";
+} from '@/components/ui/navigation-menu'
 
 const paths = [
-  { href: "/", label: "Home" },
-  { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
-];
+  { href: '/', label: 'Home' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About' },
+]
 
 const Navbar: React.FC = () => {
   const router = useRouter()
   return (
-    <div className="flex justify-center items-center p-4">
+    <div className='flex justify-center items-center p-4'>
       <NavigationMenu>
         <NavigationMenuList>
           {paths.map((path) => (
             <button
               onClick={() => router.push(path.href)}
               key={path.href}
-              className="p-4 from-cyan-950 to-zinc-800 bg-gradient-to-br rounded-2xl hover:text-cyan-400 transition-colors duration-300 ease-in-out"
-            >
+              className='p-4 from-cyan-950 to-zinc-800 bg-gradient-to-br rounded-2xl hover:text-cyan-400 transition-colors duration-300 ease-in-out'>
               {path.label}
             </button>
           ))}
         </NavigationMenuList>
       </NavigationMenu>
     </div>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar

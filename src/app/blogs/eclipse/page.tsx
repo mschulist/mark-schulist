@@ -1,7 +1,5 @@
-import Eclipse from "./Eclipse";
+import Eclipse from './Eclipse'
 
 export default function Page() {
-    return (
-        <Eclipse />
-    )
+  return <Eclipse />
 }

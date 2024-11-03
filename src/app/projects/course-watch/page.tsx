@@ -1,20 +1,19 @@
 /* eslint-disable react/no-unescaped-entities */
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image'
+import Link from 'next/link'
 
 export default function CourseWatch() {
   return (
-    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
+    <div className='flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2'>
       <Link
-        className="text-4xl self-center m-4 transform transition-transform duration-100 hover:scale-110"
-        href="https://wustlwatch.courses/"
-        target="_blank"
-      >
+        className='text-4xl self-center m-4 transform transition-transform duration-100 hover:scale-110'
+        href='https://wustlwatch.courses/'
+        target='_blank'>
         WashU Course Watch
       </Link>
-      <h2 className="text-3xl py-4">What it is</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <p className="text-lg">
+      <h2 className='text-3xl py-4'>What it is</h2>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <p className='text-lg'>
           WashU's course registration system is, well, frustrating. It (usually)
           doesn't crash because they spread out registration times, but the
           website looks like it was written decades in the past. There is a lack
@@ -33,15 +32,15 @@ export default function CourseWatch() {
           WashU 2023).
         </p>
         <Image
-          src={"https://f005.backblazeb2.com/file/mark-schulist/webstac.png"}
+          src={'https://f005.backblazeb2.com/file/mark-schulist/webstac.png'}
           alt="Webstac, our 'fantastic' system"
           height={0}
           width={500}
-          className="rounded-lg mx-4 self-center justify-self-center align-self-center"
+          className='rounded-lg mx-4 self-center justify-self-center align-self-center'
         />
       </div>
-      <h2 className="text-3xl py-4">How it works</h2>
-      <p className="text-lg">
+      <h2 className='text-3xl py-4'>How it works</h2>
+      <p className='text-lg'>
         The app uses a React frontend and a NodeJS backend. The frontend is
         hosted on Google Firebase and the backend is hosted on Google Cloud.
         We're using a Firestore database to store the courses that users want to
@@ -52,12 +51,11 @@ export default function CourseWatch() {
         course registration time.
       </p>
       <Link
-        href="https://github.com/mschulist/washu-course-alerts"
-        className="underline text-lg transform transition-transform duration-100 hover:scale-110 self-start"
-        target="_blank"
-      >
+        href='https://github.com/mschulist/washu-course-alerts'
+        className='underline text-lg transform transition-transform duration-100 hover:scale-110 self-start'
+        target='_blank'>
         Here's the GitHub repo in case you're interested.
       </Link>
     </div>
-  );
+  )
 }

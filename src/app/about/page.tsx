@@ -1,11 +1,11 @@
-import AboutText from "@/components/AboutText";
-import Projects from "@/components/Projects";
+import AboutText from '@/components/AboutText'
+import Projects from '@/components/Projects'
 
 export default function About() {
-    return (
-        <div>
-            <AboutText />
-            <Projects/>
-        </div>
-      );
+  return (
+    <div>
+      <AboutText />
+      <Projects />
+    </div>
+  )
 }

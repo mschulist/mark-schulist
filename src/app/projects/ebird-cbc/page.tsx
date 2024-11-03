@@ -1,25 +1,27 @@
 /* eslint-disable react/no-unescaped-entities */
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image'
+import Link from 'next/link'
 
 export default function EBirdCBC() {
   return (
-    <div className="flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2">
+    <div className='flex flex-col gap-4 mx-[5vw] md:mx-[15vw] my-2'>
       <Link
-        className="text-4xl self-center p-4 transform transition-transform duration-100 hover:scale-110"
-        href="https://github.com/ddkapan/eBirdCBC"
-        target="_blank"
-      >
+        className='text-4xl self-center p-4 transform transition-transform duration-100 hover:scale-110'
+        href='https://github.com/ddkapan/eBirdCBC'
+        target='_blank'>
         eBirdCBC
       </Link>
-      <h2 className="text-3xl py-4">What it is</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <p className="text-lg">
+      <h2 className='text-3xl py-4'>What it is</h2>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <p className='text-lg'>
           As an avid birder, I have participated in the Christmas Bird Count
-          (CBC) for the 7 years. We always {" use "}
-          <Link href={"https://ebird.org"} target="_blank" className="underline">
-            {"eBird"}
-          </Link>{" "}
+          (CBC) for the 7 years. We always {' use '}
+          <Link
+            href={'https://ebird.org'}
+            target='_blank'
+            className='underline'>
+            {'eBird'}
+          </Link>{' '}
           to collect our data, which makes data collection effortless, but the
           process of compiling the data is a pain. Once we've downloaded the
           data from eBird, we spend hours figuring out which counts were
@@ -42,15 +44,15 @@ export default function EBirdCBC() {
           the session in the app with others.
         </p>
         <Image
-          src={"https://f005.backblazeb2.com/file/mark-schulist/ebirdcbc.png"}
-          alt="eBird CBC"
+          src={'https://f005.backblazeb2.com/file/mark-schulist/ebirdcbc.png'}
+          alt='eBird CBC'
           height={0}
           width={600}
-          className="rounded-lg mx-4 self-center justify-self-center align-self-center"
+          className='rounded-lg mx-4 self-center justify-self-center align-self-center'
         />
       </div>
-      <h2 className="text-3xl py-4">How it works</h2>
-      <p className="text-lg">
+      <h2 className='text-3xl py-4'>How it works</h2>
+      <p className='text-lg'>
         This app is built with Electron (I know, I know...) and React. This is
         by far the most complex app I've built, for two reasons: 1.) This was my
         first time using React, so I had very little knowledge of the importance
@@ -61,15 +63,14 @@ export default function EBirdCBC() {
         <br />
         The frontend uses Leaflet to display the map, which is a fantastic
         library and was the easiest part of the app to implement. I used a
-        library {" called "}
+        library {' called '}
         <Link
-          href={"https://github.com/louischatriot/nedb"}
-          target="_blank"
-          className="underline"
-        >
+          href={'https://github.com/louischatriot/nedb'}
+          target='_blank'
+          className='underline'>
           nedb
         </Link>
-        {" to "} as the database, which is a simple database that uses a
+        {' to '} as the database, which is a simple database that uses a
         MongoDB-like API but is much more lightweight. It stores the data in a
         .db file on your computer, which is nice because you can share the
         session with other people by sending them the .db file. The backend is
@@ -84,10 +85,10 @@ export default function EBirdCBC() {
         Puppeteer. When you enter the eBird trip report, the app opens a
         headless browser to find the checklists on the trip report. Then, it
         opens a new browser window and prompts the user to log into eBird. Once
-        they've logged in, Puppeteer goes to each checklist and scrapes
-        the tracks from the checklist. In eBird the tracks are stored as lists
-        of coordinates, which my app downloads and stores in the database.
+        they've logged in, Puppeteer goes to each checklist and scrapes the
+        tracks from the checklist. In eBird the tracks are stored as lists of
+        coordinates, which my app downloads and stores in the database.
       </p>
     </div>
-  );
+  )
 }
